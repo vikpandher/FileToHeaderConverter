@@ -1,0 +1,10 @@
+// ========================================================================== //
+
+TODO: The input file and output file can still be the same file. The current
+      check just checks if the strings given for the paths are the same.
+      It will fail if for the following example:
+      input file path = ..\Test\test_file.txt
+      output file path = ..\Test\..\Test\test_file.txt 
+
+TODO: Maybe add an option to force the overwrite of an existing output file,
+      rather then overwriting it by default.
