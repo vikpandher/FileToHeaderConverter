@@ -158,7 +158,13 @@ int ProcessString(int argc, char** argv)
     std::string line;
     while (std::getline(inputFileStream, line))
     {
-        outputFileStream << line;
+        // Remove carriage return character if present (Windows)
+        if (!line.empty() && line.back() == '\r')
+        {
+            line.pop_back();
+        }
+
+        outputFileStream << line << std::endl;
     }
 
     outputFileStream << ")\";";

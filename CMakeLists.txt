@@ -39,7 +39,7 @@ target_compile_definitions("${PROJECT_NAME}" PRIVATE PROJECT_NAME="${PROJECT_NAM
 
 # Set command line arguments for the executable
 set_target_properties("${PROJECT_NAME}" PROPERTIES VS_DEBUGGER_COMMAND_ARGUMENTS
-    "../Test/bounce.wav ../Test/bounce_wav.h g_bounce_wav"
+    "/s ../Test/Cube.obj ../Test/Cube_obj.h g_cube_obj"
 )
 
 target_include_directories("${PROJECT_NAME}"
