@@ -3,7 +3,7 @@
 // @BRIEF This program is used to convert files into C++ headers so they can be
 //        embedded in a binary.
 // @AUTHOR Vik Pandher
-// @DATE 2023-12-20
+// @DATE 2026-04-24
 
 #include <fstream>
 #include <iomanip>
@@ -15,8 +15,8 @@
 
 
 int CompareStrings(const char* string1, const char* string2);
-int ProcessString(int argc, char** argv);
-int ProcessHex(int argc, char** argv);
+int ProcessString(const char* inputFileName, const char* outputFileName, const char* arrayName);
+int ProcessHex(const char* inputFileName, const char* outputFileName, const char* arrayName, bool addNullAtEnd);
 bool ValidateArrayName(const char* arrayName);
 
 int main(int argc, char** argv)
@@ -49,7 +49,8 @@ int main(int argc, char** argv)
         std::cout << "    The output file is formatted as a C++ header file." << std::endl;
         std::cout << "    By default the data is stored into a static const char array as hex values." << std::endl;
         std::cout << std::endl;
-        std::cout << "Options:" << std::endl;
+        std::cout << "Options: (only one at a time)" << std::endl;
+        std::cout << "    /n or /nullAtEnd        Adds a null byte (0x00) at the end." << std::endl;
         std::cout << "    /s or /string           Store the data as a static const char* string instead." << std::endl;
         std::cout << "    /? or /help             Displays this help message." << std::endl;
 
@@ -75,7 +76,29 @@ int main(int argc, char** argv)
             return 1;
         }
 
-        return ProcessString(argc, argv);
+        return ProcessString(argv[2], argv[3], argv[4]);
+    }
+
+    if (CompareStrings(argv[1], "/n") == 0 ||
+        CompareStrings(argv[1], "/nullAtEnd") == 0)
+    {
+        if (argc < 5)
+        {
+            std::cerr << "ERROR: Not enough arguments" << std::endl;
+            std::cerr << "    Try /? or /help" << std::endl;
+
+            return 1;
+        }
+
+        if (argc > 5)
+        {
+            std::cerr << "ERROR: Too many arguments" << std::endl;
+            std::cerr << "    Try /? or /help" << std::endl;
+
+            return 1;
+        }
+
+        return ProcessHex(argv[2], argv[3], argv[4], true);
     }
 
     if (argv[1][0] == '/')
@@ -102,7 +125,7 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    return ProcessHex(argc, argv);
+    return ProcessHex(argv[1], argv[2], argv[3], false);
 }
 
 int CompareStrings(const char* string1, const char* string2)
@@ -121,12 +144,8 @@ int CompareStrings(const char* string1, const char* string2)
     }
 }
 
-int ProcessString(int argc, char** argv)
+int ProcessString(const char* inputFileName, const char* outputFileName, const char* arrayName)
 {
-    const char* inputFileName = argv[2];
-    const char* outputFileName = argv[3];
-    const char* arrayName = argv[4];
-
     if (CompareStrings(inputFileName, outputFileName) == 0)
     {
         std::cerr << "Error: Input file and output file can't have the same name" << std::endl;
@@ -175,12 +194,8 @@ int ProcessString(int argc, char** argv)
     return 0;
 }
 
-int ProcessHex(int argc, char** argv)
+int ProcessHex(const char* inputFileName, const char* outputFileName, const char* arrayName, bool addNullAtEnd)
 {
-    const char* inputFileName = argv[1];
-    const char* outputFileName = argv[2];
-    const char* arrayName = argv[3];
-
     if (CompareStrings(inputFileName, outputFileName) == 0)
     {
         std::cerr << "Error: Input file and output file can't have the same name" << std::endl;
@@ -190,7 +205,7 @@ int ProcessHex(int argc, char** argv)
     std::ifstream inputFileStream(inputFileName, std::ios::binary);
     if (!inputFileStream.is_open())
     {
-        std::cerr << "Error: Couldn't open input file" << std::endl;
+        std::cerr << "Error: Couldn't open input file:" << inputFileName << std::endl;
         return 1;
     }
 
@@ -245,6 +260,22 @@ int ProcessHex(int argc, char** argv)
 #endif
 
         count++;
+    }
+
+    // Add a null byte at the end so when reading this memory "line-by-line", the end is detected
+    if (addNullAtEnd)
+    {
+        if (!isFirstElement)
+        {
+            outputFileStream << ",";
+        }
+
+        if (count % countPerLine == 0)
+        {
+            outputFileStream << std::endl << "   ";
+        }
+
+        outputFileStream << " 0x00";
     }
 
     outputFileStream << std::endl << "};";
